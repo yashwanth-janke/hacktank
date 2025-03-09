@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hire3x - AI-Powered Candidate Matching</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .logo-text {
+            background: linear-gradient(90deg, #2563eb, #4f46e5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .shimmer {
+            background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.4), rgba(255,255,255,0));
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        
+        .metrics-badge {
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .metrics-badge::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(79, 70, 229, 0.2), rgba(37, 99, 235, 0.2));
+            z-index: -1;
+            transform: skewX(-15deg);
+        }
+        
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 12px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -125px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.875rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c7d2fe;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a5b4fc;
+        }
+
+        /* Form focus styles */
+        input:focus, select:focus, textarea:focus {
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <svg class="h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        <span class="ml-3 text-3xl font-bold logo-text">Hire3x</span>
+                    </div>
+                    <div class="hidden sm:ml-8 sm:flex sm:space-x-8">
+                        <a href="#" class="border-indigo-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-md font-medium">
+                            Dashboard
+                        </a>
+                        <a href="#candidates-section" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-md font-medium">
+                            Candidates
+                        </a>
+                        <a href="#upload-section" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-md font-medium">
+                            Upload Data
+                        </a>
+                    </div>
+                </div>
+                <div class="hidden sm:ml-6 sm:flex sm:items-center">
+                    <span class="inline-flex items-center px-4 py-1.5 rounded-full text-md font-medium bg-indigo-100 text-indigo-800">
+                        <span id="candidate-count-badge">0</span> candidates
+                    </span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Hero Section -->
+        <div class="relative bg-white overflow-hidden">
+            <div class="max-w-7xl mx-auto">
+                <div class="relative z-10 pb-8 bg-white sm:pb-16 md:pb-20 lg:w-full lg:pb-28 xl:pb-32">
+                    <div class="mt-10 mx-auto max-w-7xl px-4 sm:mt-12 sm:px-6 md:mt-16 lg:mt-20 lg:px-8 xl:mt-28">
+                        <div class="sm:text-center lg:text-left">
+                            <h1 class="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
+                                <span class="block xl:inline">Find the perfect</span>
+                                <span class="block logo-text xl:inline">candidates</span>
+                            </h1>
+                            <p class="mt-3 text-xl text-gray-500 sm:mt-5 sm:text-2xl sm:max-w-xl sm:mx-auto md:mt-5 md:text-2xl lg:mx-0">
+                                Using advanced AI technology to match candidates with job requirements, considering skills, experience, and Hire3x assessment performance.
+                            </p>
+                            <div class="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
+                                <div class="rounded-md shadow">
+                                    <a href="#job-form" class="w-full flex items-center justify-center px-8 py-4 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 md:py-5 md:text-lg md:px-10">
+                                        Get started
+                                    </a>
+                                </div>
+                                <div class="mt-3 sm:mt-0 sm:ml-3">
+                                    <a href="#upload-section" class="w-full flex items-center justify-center px-8 py-4 border border-transparent text-base font-medium rounded-md text-indigo-600 bg-indigo-100 hover:bg-indigo-200 md:py-5 md:text-lg md:px-10">
+                                        Upload data
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="hidden lg:block lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
+                <!-- <img class="h-56 w-full object-cover sm:h-72 md:h-96 lg:w-full lg:h-full" src="https://images.unsplash.com/photo-1551434678-e076c223a692?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2070&q=80" alt="People working on laptops"> -->
+            </div>
+        </div>
+
+        <!-- Job Description Form Section -->
+        <div id="job-form" class="py-16 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="lg:text-center mb-10">
+                    <h2 class="text-base text-indigo-600 font-semibold tracking-wide uppercase">Job Matching</h2>
+                    <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+                        Find the best candidates for your role
+                    </p>
+                    <p class="mt-4 max-w-2xl text-xl text-gray-500 lg:mx-auto">
+                        Enter your job description details below to find matching candidates using AI-powered semantic matching.
+                    </p>
+                </div>
+
+                <div class="mt-12">
+                    <form id="job-description-form" class="space-y-10 divide-y divide-gray-200">
+                        <div class="space-y-10 divide-y divide-gray-200">
+                            <div>
+                                <div>
+                                    <h3 class="text-xl leading-6 font-medium text-gray-900">Job Details</h3>
+                                    <p class="mt-2 text-base text-gray-500">
+                                        Provide detailed information about the position to get better matches.
+                                    </p>
+                                </div>
+
+                                <div class="mt-8 grid grid-cols-1 gap-y-8 gap-x-6 sm:grid-cols-6">
+                                    <div class="sm:col-span-3">
+                                        <label for="job-title" class="block text-md font-medium text-gray-700" >Job Title</label>
+                                        <div class="mt-2">
+                                            <input type="text" id="job-title" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base border-gray-300 rounded-md py-3 px-4" required>
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="company" class="block text-md font-medium text-gray-700">Company</label>
+                                        <div class="mt-2">
+                                            <input type="text" id="company" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base border-gray-300 rounded-md py-3 px-4" required>
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="location" class="block text-md font-medium text-gray-700">Location</label>
+                                        <div class="mt-2">
+                                            <input type="text" id="location" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base border-gray-300 rounded-md py-3 px-4">
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="remote-option" class="block text-md font-medium text-gray-700">Remote Option</label>
+                                        <div class="mt-2">
+                                            <select id="remote-option" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base border-gray-300 rounded-md py-3 px-4">
+                                                <option value="No Preference">No Preference</option>
+                                                <option value="Remote Only">Remote Only</option>
+                                                <option value="Hybrid">Hybrid</option>
+                                                <option value="On-Site">On-Site</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="experience-level" class="block text-md font-medium text-gray-700">Experience Level</label>
+                                        <div class="mt-2">
+                                            <select id="experience-level" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base border-gray-300 rounded-md py-3 px-4">
+                                                <option value="Entry Level">Entry Level</option>
+                                                <option value="Mid-Level">Mid-Level</option>
+                                                <option value="Senior">Senior</option>
+                                                <option value="Expert">Expert</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="employment-type" class="block text-md font-medium text-gray-700">Employment Type</label>
+                                        <div class="mt-2">
+                                            <select id="employment-type" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base border-gray-300 rounded-md py-3 px-4">
+                                                <option value="Full-time">Full-time</option>
+                                                <option value="Part-time">Part-time</option>
+                                                <option value="Contract">Contract</option>
+                                                <option value="Freelance">Freelance</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-6">
+                                        <label for="description" class="block text-md font-medium text-gray-700">
+                                            Job Description
+                                        </label>
+                                        <div class="mt-2">
+                                            <textarea id="description" rows="5" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base border-gray-300 rounded-md py-3 px-4" required></textarea>
+                                        </div>
+                                        <p class="mt-2 text-md text-gray-500">Include a detailed description of the role and responsibilities.</p>
+                                    </div>
+
+                                    <div class="sm:col-span-6">
+                                        <label class="block text-md font-medium text-gray-700">Required Skills</label>
+                                        <div id="required-skills-container" class="mt-2">
+                                            <div class="flex items-center space-x-2 mb-3">
+                                                <input type="text" class="required-skill-input shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base border-gray-300 rounded-md py-3 px-4" placeholder="Add required skill">
+                                                <button type="button" class="add-skill-btn inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                        <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                            <div id="required-skills-list" class="flex flex-wrap gap-2 mt-3"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-6">
+                                        <label class="block text-md font-medium text-gray-700">Requirements</label>
+                                        <div id="requirements-container" class="mt-2">
+                                            <div class="flex items-center space-x-2 mb-3">
+                                                <input type="text" class="requirement-input shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base border-gray-300 rounded-md py-3 px-4" placeholder="Add requirement">
+                                                <button type="button" class="add-requirement-btn inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                        <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                            <div id="requirements-list" class="space-y-3 mt-3"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-6">
+                                        <label class="block text-md font-medium text-gray-700">Responsibilities</label>
+                                        <div id="responsibilities-container" class="mt-2">
+                                            <div class="flex items-center space-x-2 mb-3">
+                                                <input type="text" class="responsibility-input shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base border-gray-300 rounded-md py-3 px-4" placeholder="Add responsibility">
+                                                <button type="button" class="add-responsibility-btn inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                        <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                            <div id="responsibilities-list" class="space-y-3 mt-3"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-6">
+                                        <label class="block text-md font-medium text-gray-700 mb-4">Required Hire3x Assessments</label>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            <div class="relative flex items-start bg-white p-4 rounded-lg border border-gray-200 hover:border-indigo-500 transition-colors duration-200">
+                                                <div class="flex items-center h-5">
+                                                    <input type="checkbox" name="hire3x-assessments" value="Frontend Development" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                                </div>
+                                                <div class="ml-3">
+                                                    <label class="font-medium text-gray-700">Frontend Development</label>
+                                                </div>
+                                            </div>
+                                            <div class="relative flex items-start bg-white p-4 rounded-lg border border-gray-200 hover:border-indigo-500 transition-colors duration-200">
+                                                <div class="flex items-center h-5">
+                                                    <input type="checkbox" name="hire3x-assessments" value="Backend Development" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                                </div>
+                                                <div class="ml-3">
+                                                    <label class="font-medium text-gray-700">Backend Development</label>
+                                                </div>
+                                            </div>
+                                            <div class="relative flex items-start bg-white p-4 rounded-lg border border-gray-200 hover:border-indigo-500 transition-colors duration-200">
+                                                <div class="flex items-center h-5">
+                                                    <input type="checkbox" name="hire3x-assessments" value="Full Stack Developer" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                                </div>
+                                                <div class="ml-3">
+                                                    <label class="font-medium text-gray-700">Full Stack Developer</label>
+                                                </div>
+                                            </div>
+                                            <div class="relative flex items-start bg-white p-4 rounded-lg border border-gray-200 hover:border-indigo-500 transition-colors duration-200">
+                                                <div class="flex items-center h-5">
+                                                    <input type="checkbox" name="hire3x-assessments" value="Data Science" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                                </div>
+                                                <div class="ml-3">
+                                                    <label class="font-medium text-gray-700">Data Science</label>
+                                                </div>
+                                            </div>
+                                            <div class="relative flex items-start bg-white p-4 rounded-lg border border-gray-200 hover:border-indigo-500 transition-colors duration-200">
+                                                <div class="flex items-center h-5">
+                                                    <input type="checkbox" name="hire3x-assessments" value="Machine Learning" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                                </div>
+                                                <div class="ml-3">
+                                                    <label class="font-medium text-gray-700">Machine Learning</label>
+                                                </div>
+                                            </div>
+                                            <div class="relative flex items-start bg-white p-4 rounded-lg border border-gray-200 hover:border-indigo-500 transition-colors duration-200">
+                                                <div class="flex items-center h-5">
+                                                    <input type="checkbox" name="hire3x-assessments" value="DevOps" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                                </div>
+                                                <div class="ml-3">
+                                                    <label class="font-medium text-gray-700">DevOps</label>
+                                                </div>
+                                            </div>
+                                            <div class="relative flex items-start bg-white p-4 rounded-lg border border-gray-200 hover:border-indigo-500 transition-colors duration-200">
+                                                <div class="flex items-center h-5">
+                                                    <input type="checkbox" name="hire3x-assessments" value="Cloud Architecture" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                                </div>
+                                                <div class="ml-3">
+                                                    <label class="font-medium text-gray-700">Cloud Architecture</label>
+                                                </div>
+                                            </div>
+                                            <div class="relative flex items-start bg-white p-4 rounded-lg border border-gray-200 hover:border-indigo-500 transition-colors duration-200">
+                                                <div class="flex items-center h-5">
+                                                    <input type="checkbox" name="hire3x-assessments" value="Database Management" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                                </div>
+                                                <div class="ml-3">
+                                                    <label class="font-medium text-gray-700">Database Management</label>
+                                                </div>
+                                            </div>
+                                            <div class="relative flex items-start bg-white p-4 rounded-lg border border-gray-200 hover:border-indigo-500 transition-colors duration-200">
+                                                <div class="flex items-center h-5">
+                                                    <input type="checkbox" name="hire3x-assessments" value="Mobile Development" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                                </div>
+                                                <div class="ml-3">
+                                                    <label class="font-medium text-gray-700">Mobile Development</label>
+                                                </div>
+                                            </div>
+                                            <div class="relative flex items-start bg-white p-4 rounded-lg border border-gray-200 hover:border-indigo-500 transition-colors duration-200">
+                                                <div class="flex items-center h-5">
+                                                    <input type="checkbox" name="hire3x-assessments" value="UI/UX Design" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                                </div>
+                                                <div class="ml-3">
+                                                    <label class="font-medium text-gray-700">UI/UX Design</label>
+                                                </div>
+                                            </div>
+                                            <div class="relative flex items-start bg-white p-4 rounded-lg border border-gray-200 hover:border-indigo-500 transition-colors duration-200">
+                                                <div class="flex items-center h-5">
+                                                    <input type="checkbox" name="hire3x-assessments" value="QA Automation" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                                </div>
+                                                <div class="ml-3">
+                                                    <label class="font-medium text-gray-700">QA Automation</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p class="mt-4 text-sm text-gray-500">Select all applicable assessments for this role</p>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="min-assessment-score" class="block text-md font-medium text-gray-700">Minimum Assessment Score</label>
+                                        <div class="mt-2">
+                                            <input type="number" id="min-assessment-score" min="0" max="100" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base border-gray-300 rounded-md py-3 px-4" placeholder="0-100">
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="top-k" class="block text-md font-medium text-gray-700">Number of Results</label>
+                                        <div class="mt-2">
+                                            <input type="number" id="top-k" value="10" min="1" max="50" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base border-gray-300 rounded-md py-3 px-4">
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="min-experience" class="block text-md font-medium text-gray-700">Minimum Years of Experience</label>
+                                        <div class="mt-2">
+                                            <input type="number" id="min-experience" min="0" step="0.5" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base border-gray-300 rounded-md py-3 px-4">
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="location-filter" class="block text-md font-medium text-gray-700">Location Filter (optional)</label>
+                                        <div class="mt-2">
+                                            <input type="text" id="location-filter" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base border-gray-300 rounded-md py-3 px-4" placeholder="e.g., San Francisco, CA">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-8">
+                            <div class="flex justify-end space-x-4">
+                                <button type="button" id="reset-form-btn" class="bg-white py-3 px-6 border border-gray-300 rounded-md shadow-sm text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    Reset
+                                </button>
+                                <button type="submit" class="inline-flex justify-center py-3 px-8 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    Find Matching Candidates
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="candidates-section" class="py-16 bg-gray-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="lg:text-center mb-12">
+                    <h2 class="text-base text-indigo-600 font-semibold tracking-wide uppercase">Results</h2>
+                    <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+                        Matched Candidates
+                    </p>
+                </div>
+
+                <div id="loading" class="hidden">
+                    <div class="flex justify-center items-center py-16">
+                        <svg class="animate-spin h-12 w-12 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span class="ml-4 text-xl font-medium text-gray-900">Searching for perfect candidates...</span>
+                    </div>
+                </div>
+
+                <div id="no-results" class="hidden">
+                    <div class="bg-white p-8 rounded-lg shadow-md text-center">
+                        <svg class="h-16 w-16 text-gray-400 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <h3 class="text-xl font-medium text-gray-900">No candidates found</h3>
+                        <p class="mt-2 text-gray-500 text-lg">Try adjusting your search criteria or upload more candidates.</p>
+                    </div>
+                </div>
+
+                <div id="results-container" class="hidden">
+                    <div class="flex justify-between items-center mb-8">
+                        <div>
+                            <span class="text-gray-600 text-lg">Found <span id="result-count" class="font-medium">0</span> matching candidates</span>
+                        </div>
+                        <div>
+                            <button id="export-results-btn" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150">
+                                <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                Export as PDF
+                            </button>
+                        </div>
+                    </div>
+                    <div id="candidates-list" class="grid grid-cols-1 gap-8"></div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Candidate Profile Modal (Dynamically Generated) -->
+        <div id="profile-modal-container"></div>
+        
+        <!-- Email Template Modal (Dynamically Generated) -->
+        <div id="email-modal-container"></div>
+    </main>
+
+    <footer class="bg-white">
+        <div class="max-w-7xl mx-auto py-12 px-4 overflow-hidden sm:px-6 lg:px-8">
+            <p class="text-center text-base text-gray-500">
+                &copy; 2025 Hire3x, Inc. All rights reserved.
+            </p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
